@@ -85,6 +85,15 @@ public class AdminGUI {
         }
 
         // Add control buttons in the bottom row
+        // Reload config button (slot 47)
+        ItemStack reloadButton = ItemUtils.createItem(
+            Material.COMMAND_BLOCK,
+            "&eReload Config",
+            "&7Click to reload config.yml",
+            "&7(messages, rotation interval, etc.)"
+        );
+        inventory.setItem(47, reloadButton);
+
         // Force rotation button (slot 49)
         ItemStack rotateButton = ItemUtils.createItem(
             Material.EMERALD,

@@ -10,3 +10,4 @@ messages:
   no-items-pool: "&cNo items in the pool to rotate!"
   time-remaining: "&eTime until next rotation: &6{time}"
   sold-out: "&cSOLD OUT"
+  config-reloaded: "&aConfig reloaded successfully!"
