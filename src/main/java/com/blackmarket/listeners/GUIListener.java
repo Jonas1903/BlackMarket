@@ -149,7 +149,6 @@ public class GUIListener implements Listener {
             return;
         }
         
-        boolean clickedTopInventory = clickedInventory == inventory;
         boolean clickedBottomInventory = clickedInventory == player.getInventory();
         
         // If player clicked their own inventory (bottom)
@@ -184,7 +183,6 @@ public class GUIListener implements Listener {
         }
         
         // From here on, we're handling clicks on the TOP inventory (Admin GUI)
-        // (clickedTopInventory should be true at this point)
         
         // Handle reload config button (slot 47)
         if (event.getSlot() == 47) {
