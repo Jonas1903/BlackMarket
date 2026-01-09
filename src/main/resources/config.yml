@@ -1,0 +1,12 @@
+rotation-interval-hours: 24
+messages:
+  purchase-success: "&aYou have successfully purchased this item!"
+  already-purchased: "&cYou have already purchased this item!"
+  not-enough-items: "&cYou don't have the required items!"
+  no-permission: "&cYou don't have permission to do this!"
+  rotation-forced: "&6The black market items have been rotated!"
+  admin-opened: "&eOpened admin menu"
+  item-added: "&aItem added to the black market pool!"
+  no-items-pool: "&cNo items in the pool to rotate!"
+  time-remaining: "&eTime until next rotation: &6{time}"
+  sold-out: "&cSOLD OUT"

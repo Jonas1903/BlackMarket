@@ -1,0 +1,12 @@
+name: BlackMarket
+version: '${project.version}'
+main: com.blackmarket.BlackMarket
+api-version: '1.21'
+author: BlackMarket Team
+description: A black market plugin for trading items
+
+commands:
+  blackmarket:
+    description: Opens the black market shop
+    aliases: [bm]
+    usage: /<command> [admin]
