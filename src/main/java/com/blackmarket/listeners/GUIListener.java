@@ -139,7 +139,51 @@ public class GUIListener implements Listener {
     private void handleAdminGUIClick(InventoryClickEvent event, Player player, Inventory inventory) {
         ItemStack clicked = event.getCurrentItem();
         ItemStack cursor = event.getCursor();
-
+        
+        // CRITICAL: Check which inventory was clicked
+        Inventory clickedInventory = event.getClickedInventory();
+        
+        // Handle null (click outside inventory boundaries)
+        if (clickedInventory == null) {
+            event.setCancelled(true);
+            return;
+        }
+        
+        boolean clickedBottomInventory = clickedInventory == player.getInventory();
+        
+        // If player clicked their own inventory (bottom)
+        if (clickedBottomInventory) {
+            // Handle shift-click to add items from player inventory to pool
+            if (event.getClick() == ClickType.SHIFT_LEFT || event.getClick() == ClickType.SHIFT_RIGHT) {
+                event.setCancelled(true);
+                
+                if (clicked != null && clicked.getType() != Material.AIR) {
+                    // Add to pool
+                    MarketItem newItem = new MarketItem(clicked.clone(), new ArrayList<>(), 1);
+                    dataManager.addItemToPool(newItem);
+                    
+                    player.sendMessage(ItemUtils.translateColorCodes(
+                        plugin.getConfig().getString("messages.item-added", "&aItem added to the black market pool!")
+                    ));
+                    
+                    // Remove item from player inventory
+                    clickedInventory.setItem(event.getSlot(), null);
+                    
+                    // Refresh GUI
+                    Bukkit.getScheduler().runTask(plugin, () -> {
+                        new AdminGUI(plugin, dataManager, plugin.getRotationManager()).open(player);
+                    });
+                }
+                return;
+            }
+            
+            // Allow normal clicks on player inventory (picking up items, etc.)
+            // DON'T cancel the event here - let the player pick up items normally
+            return;
+        }
+        
+        // From here on, we're handling clicks on the TOP inventory (Admin GUI)
+        
         // Handle reload config button (slot 47)
         if (event.getSlot() == 47) {
             event.setCancelled(true);
@@ -179,7 +223,7 @@ public class GUIListener implements Listener {
                 ));
                 
                 // Clear cursor
-                event.setCursor(null);
+                player.setItemOnCursor(null);
                 
                 // Refresh GUI
                 Bukkit.getScheduler().runTask(plugin, () -> {
@@ -189,7 +233,7 @@ public class GUIListener implements Listener {
             return;
         }
 
-        // Handle clicking on items in the pool or empty slots for adding items
+        // Handle clicking on item pool slots (0-44)
         if (event.getSlot() < 45) {
             event.setCancelled(true);
 
@@ -204,7 +248,7 @@ public class GUIListener implements Listener {
                 ));
                 
                 // Clear cursor
-                event.setCursor(null);
+                player.setItemOnCursor(null);
                 
                 // Refresh GUI
                 Bukkit.getScheduler().runTask(plugin, () -> {
@@ -242,33 +286,8 @@ public class GUIListener implements Listener {
             return;
         }
 
-        // Handle adding items to pool via shift-click or placing
-        if (event.getClick() == ClickType.SHIFT_LEFT || event.getClick() == ClickType.SHIFT_RIGHT) {
-            if (event.getClickedInventory() != inventory) {
-                // Player is shift-clicking from their inventory
-                event.setCancelled(true);
-                
-                if (clicked != null && clicked.getType() != Material.AIR) {
-                    // Add to pool
-                    MarketItem newItem = new MarketItem(clicked.clone(), new ArrayList<>(), 1);
-                    dataManager.addItemToPool(newItem);
-                    
-                    player.sendMessage(ItemUtils.translateColorCodes(
-                        plugin.getConfig().getString("messages.item-added", "&aItem added to the black market pool!")
-                    ));
-                    
-                    // Remove item from player inventory
-                    event.getClickedInventory().setItem(event.getSlot(), null);
-                    
-                    // Refresh GUI
-                    Bukkit.getScheduler().runTask(plugin, () -> {
-                        new AdminGUI(plugin, dataManager, plugin.getRotationManager()).open(player);
-                    });
-                }
-            }
-        } else {
-            event.setCancelled(true);
-        }
+        // Cancel any other clicks in the top inventory to prevent item theft
+        event.setCancelled(true);
     }
 
     private void handleCostEditorClick(InventoryClickEvent event, Player player, Inventory inventory, String title) {
