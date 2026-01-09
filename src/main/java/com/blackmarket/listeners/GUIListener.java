@@ -140,15 +140,20 @@ public class GUIListener implements Listener {
         ItemStack clicked = event.getCurrentItem();
         ItemStack cursor = event.getCursor();
 
-        // Allow placing items in empty slots (adding to pool)
-        if (event.getSlot() == 53) {
-            // Add item slot - allow dropping items
+        // Handle reload config button (slot 47)
+        if (event.getSlot() == 47) {
             event.setCancelled(true);
+            if (clicked != null && clicked.getType() == Material.COMMAND_BLOCK) {
+                plugin.reloadConfig();
+                player.sendMessage(ItemUtils.translateColorCodes(
+                    plugin.getConfig().getString("messages.config-reloaded", "&aConfig reloaded successfully!")
+                ));
+            }
             return;
         }
 
+        // Handle force rotation button (slot 49)
         if (event.getSlot() == 49) {
-            // Force rotation button
             event.setCancelled(true);
             
             if (clicked != null && clicked.getType() == Material.EMERALD) {
@@ -161,30 +166,76 @@ public class GUIListener implements Listener {
             return;
         }
 
-        // Handle clicking on items in the pool
-        if (event.getSlot() < 45 && clicked != null && clicked.getType() != Material.AIR) {
+        // Handle add item slot (slot 53) - allow dropping items with cursor
+        if (event.getSlot() == 53) {
+            event.setCancelled(true);
+            if (cursor != null && cursor.getType() != Material.AIR) {
+                // Add item from cursor to pool
+                MarketItem newItem = new MarketItem(cursor.clone(), new ArrayList<>(), 1);
+                dataManager.addItemToPool(newItem);
+                
+                player.sendMessage(ItemUtils.translateColorCodes(
+                    plugin.getConfig().getString("messages.item-added", "&aItem added to the black market pool!")
+                ));
+                
+                // Clear cursor
+                event.setCursor(null);
+                
+                // Refresh GUI
+                Bukkit.getScheduler().runTask(plugin, () -> {
+                    new AdminGUI(plugin, dataManager, plugin.getRotationManager()).open(player);
+                });
+            }
+            return;
+        }
+
+        // Handle clicking on items in the pool or empty slots for adding items
+        if (event.getSlot() < 45) {
             event.setCancelled(true);
 
-            // Find the item in the pool
-            List<UUID> poolIds = new ArrayList<>(dataManager.getItemPool().keySet());
-            if (event.getSlot() < poolIds.size()) {
-                UUID itemId = poolIds.get(event.getSlot());
-                MarketItem marketItem = dataManager.getMarketItem(itemId);
+            // Check if clicking on empty slot with item on cursor - add to pool
+            if ((clicked == null || clicked.getType() == Material.AIR) && cursor != null && cursor.getType() != Material.AIR) {
+                // Add item from cursor to pool
+                MarketItem newItem = new MarketItem(cursor.clone(), new ArrayList<>(), 1);
+                dataManager.addItemToPool(newItem);
+                
+                player.sendMessage(ItemUtils.translateColorCodes(
+                    plugin.getConfig().getString("messages.item-added", "&aItem added to the black market pool!")
+                ));
+                
+                // Clear cursor
+                event.setCursor(null);
+                
+                // Refresh GUI
+                Bukkit.getScheduler().runTask(plugin, () -> {
+                    new AdminGUI(plugin, dataManager, plugin.getRotationManager()).open(player);
+                });
+                return;
+            }
 
-                if (marketItem != null) {
-                    if (event.getClick() == ClickType.LEFT) {
-                        // Open cost editor
-                        editingSessions.put(player.getUniqueId(), itemId);
-                        new CostEditorGUI(plugin, dataManager, itemId).open(player);
-                    } else if (event.getClick() == ClickType.RIGHT) {
-                        // Remove from pool
-                        dataManager.removeItemFromPool(itemId);
-                        player.sendMessage(ItemUtils.translateColorCodes("&cItem removed from pool!"));
-                        
-                        // Refresh GUI
-                        Bukkit.getScheduler().runTask(plugin, () -> {
-                            new AdminGUI(plugin, dataManager, plugin.getRotationManager()).open(player);
-                        });
+            // Handle clicking on existing items in the pool
+            if (clicked != null && clicked.getType() != Material.AIR) {
+                // Find the item in the pool
+                List<UUID> poolIds = new ArrayList<>(dataManager.getItemPool().keySet());
+                if (event.getSlot() < poolIds.size()) {
+                    UUID itemId = poolIds.get(event.getSlot());
+                    MarketItem marketItem = dataManager.getMarketItem(itemId);
+
+                    if (marketItem != null) {
+                        if (event.getClick() == ClickType.LEFT) {
+                            // Open cost editor
+                            editingSessions.put(player.getUniqueId(), itemId);
+                            new CostEditorGUI(plugin, dataManager, itemId).open(player);
+                        } else if (event.getClick() == ClickType.RIGHT) {
+                            // Remove from pool
+                            dataManager.removeItemFromPool(itemId);
+                            player.sendMessage(ItemUtils.translateColorCodes("&cItem removed from pool!"));
+                            
+                            // Refresh GUI
+                            Bukkit.getScheduler().runTask(plugin, () -> {
+                                new AdminGUI(plugin, dataManager, plugin.getRotationManager()).open(player);
+                            });
+                        }
                     }
                 }
             }
