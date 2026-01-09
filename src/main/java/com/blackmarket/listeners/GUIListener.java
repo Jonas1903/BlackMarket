@@ -141,8 +141,16 @@ public class GUIListener implements Listener {
         ItemStack cursor = event.getCursor();
         
         // CRITICAL: Check which inventory was clicked
-        boolean clickedTopInventory = event.getClickedInventory() == inventory;
-        boolean clickedBottomInventory = event.getClickedInventory() == player.getInventory();
+        Inventory clickedInventory = event.getClickedInventory();
+        
+        // Handle null (click outside inventory boundaries)
+        if (clickedInventory == null) {
+            event.setCancelled(true);
+            return;
+        }
+        
+        boolean clickedTopInventory = clickedInventory == inventory;
+        boolean clickedBottomInventory = clickedInventory == player.getInventory();
         
         // If player clicked their own inventory (bottom)
         if (clickedBottomInventory) {
@@ -160,7 +168,7 @@ public class GUIListener implements Listener {
                     ));
                     
                     // Remove item from player inventory
-                    event.getClickedInventory().setItem(event.getSlot(), null);
+                    clickedInventory.setItem(event.getSlot(), null);
                     
                     // Refresh GUI
                     Bukkit.getScheduler().runTask(plugin, () -> {
@@ -176,9 +184,7 @@ public class GUIListener implements Listener {
         }
         
         // From here on, we're handling clicks on the TOP inventory (Admin GUI)
-        if (!clickedTopInventory) {
-            return;
-        }
+        // (clickedTopInventory should be true at this point)
         
         // Handle reload config button (slot 47)
         if (event.getSlot() == 47) {
